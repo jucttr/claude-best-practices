@@ -15,7 +15,7 @@
 
 ### 必须做
 
-- 全部文档用简体中文；跨文件引用用 Obsidian 双链，路径以 vault 根为基准，如 `[[docs/settings_README|settings_README]]`；根层文件直接写 `[[AGENTS|AGENTS.md]]`。
+- 全部文档优先用简体中文；跨文件引用用 Obsidian 双链，路径以 vault 根为基准，如 `[[docs/settings_README|settings_README]]`；根层文件直接写 `[[AGENTS|AGENTS.md]]`。
 - 文件路径本身用行内代码（如 `docs/ClaudeCode官方文档/`），不用双链；双链只用于跨文档引用。
 
 ### 禁止做
