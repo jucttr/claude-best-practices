@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "example-readonly-db": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/readonly-db-mcp",
+        "--dsn",
+        "${MCP_DB_DSN}"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "info"
+      },
+      "timeout": 30000
+    },
+    "example-internal-api": {
+      "type": "http",
+      "url": "${MCP_API_BASE_URL:-https://mcp.example.com}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_API_TOKEN}"
+      },
+      "timeout": 30000
+    }
+  }
+}
