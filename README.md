@@ -6,7 +6,7 @@ tags:
   - AI学习/skill
   - AI学习/subagent
 created: 2026-10-22
-updated: 2026-11-08
+updated: 2026-11-10
 aliases:
   - Claude 最佳实践模板
 ---
@@ -25,7 +25,34 @@ aliases:
 | 一组能单独拿走用的上下文管理方案    | 不是脚手架或生成器            |
 | 一套配过一遍、踩过坑、留了说明的样本  | 不是官方文档摘要             |
 
-## 二、为什么按真实项目来摆
+## 二、目录长什么样
+
+真实布局摊开就这一棵树，每行注释只说它是什么：
+
+```text
+claude-best-practices/
+├── CLAUDE.md               # Claude Code 每次会话自动读的项目记忆
+├── CLAUDE.local.md         # 个人偏好，只给自己用，一般不提交
+├── AGENTS.md               # 给所有编码 Agent 的工作规范
+├── README.md               # 给人看的项目说明书（本文件）
+├── .mcp.json               # 团队共享的 MCP server 配置（占位示例）
+├── .gitignore              # 只忽略 .obsidian/
+├── assets/                 # 文档引用的图片
+├── docs/                   # 12 篇机制说明、官方剪藏与调研，不参与自动加载
+│   └── ClaudeCode官方文档/ # 官方文档中文剪藏，8 篇
+└── .claude/                # Claude Code 的项目级扩展层
+    ├── settings.json        # 权限、sandbox、插件与三条 hook demo
+    ├── settings.local.json  # 个人覆盖，一般不提交
+    ├── agents/              # 5 份 subagent 定义
+    ├── skills/              # 3 个 skill
+    ├── commands/            # 斜杠命令
+    ├── rules/               # 2 份脱敏规范样本 + 1 份测试规范示例
+    ├── scripts/             # SessionStart demo 引用的 node 脚本
+    ├── knowledge/           # 空目录
+    └── output-styles/       # 空目录
+```
+
+## 三、为什么按真实项目来摆
 
 配置这件事，麻烦通常不在「某个字段怎么写」，而在三件事上：
 
@@ -35,19 +62,20 @@ aliases:
 
 所以这份样本没写成一份「配置清单」，而是按真实项目摆一遍：哪些文件每次会话都读、哪些命中才读、哪些只给人看，从目录上就能分出来。
 
-## 三、能拿走什么
+## 四、能拿走什么
 
-三样可以单独复用的东西，彼此没有依赖，只取其中一件也成立：
+四样可以单独复用的东西，彼此没有依赖，只取其中一件也成立：
 
-| 组件 | 可复用的是 |
-| --- | --- |
-| subagent 定义 | 一份完整的只读审查 agent：`tools` / `memory` / 分级报告门槛表怎么组合 |
-| skill 编写规范 | 写 skill 的结构、触发条件、frontmatter 两层口径与加载机制；另附一个只能显式调用的任务型 skill 作对照 |
-| 项目级配置 | `.claude/settings.json` 里权限、sandbox、插件与 hook demo 的配法，`.mcp.json` 的团队共享边界 |
+| 组件          | 可复用的是                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| subagent 定义 | 五份现成 agent，覆盖只读审查、PRD 生成、前端工程、代码探索、架构五种角色；对照看 `tools` 白名单按角色怎么收放                                  |
+| skill 编写规范  | 写 skill 的结构、触发条件、frontmatter 两层口径与加载机制；另有一份编辑 Obsidian Markdown 的规范 skill，和一个只能显式调用的任务型 skill 作对照 |
+| rules 规范样本  | 两份从真实项目脱敏的规范——通用开发规范与业务层模式，可直接当自己项目 `.claude/rules/` 的起点                                          |
+| 项目级配置       | `.claude/settings.json` 里权限、sandbox、插件与三条 hook demo（工具调用前、会话启动、压缩后注入）的配法，`.mcp.json` 的团队共享边界      |
 
 `.claude/commands/` 里的斜杠命令是最小示例。
 
-## 四、怎么开始用
+## 五、怎么开始用
 
 **前提**：把当前目录当成项目根，从这一层启动 Claude Code。共享设置从会话主工作目录读取，从别处启动会读不到这份配置。
 
@@ -56,6 +84,7 @@ aliases:
 - 说一句「帮我 review 一下这段改动」，或用 `@senior-code-reviewer`，看只读审查 agent 是否被唤起——它只出分级报告，不动代码。
 - 输入 `/security-review HEAD`，看任务型 skill 怎么把 `git diff` 带进上下文。它设了 `disable-model-invocation: true`，只能显式调用，这是「不希望模型自作主张启动」的写法。
 - 输入 `/fix-issue <issue 号>`，看斜杠命令的最小形态。
+- 新开会话后找 `SESSION_START_NODE_OK`，触发一次 `/compact` 后找 `SESSION_START_COMPACT_OK`——`SessionStart` 的两条 hook demo 分别在「会话启动」「压缩后」这两个时机把内容注入上下文。
 - `/status` 的 **Setting sources** 一行列出本次会话读了哪些配置文件，`claude doctor` 列出被拒绝的条目。这两处是确认「生效了没有」的地方。
 
 `.mcp.json` 里的两个 server 是占位示例：交互式会话要先审批，且依赖 `MCP_DB_DSN` / `MCP_API_TOKEN` 等环境变量。不配就连不上，这不是配置写错了。
@@ -69,16 +98,16 @@ aliases:
 > [!tip] 位置边界
 > `.mcp.json` 只能在项目根，`CLAUDE.local.md` 只在项目根，`CLAUDE.md` 项目根与 `.claude/` 两处都读（本仓库按官方示例放项目根）。放错的共同特点是不报错、静默读不到；逐项依据见 [[docs/settings_README|settings_README]] 与 [[docs/mcp_README|mcp_README]]。
 
-## 五、文档地图
+## 六、文档地图
 
-`docs/` 下 11 篇，按你想解决的问题挑：
+`docs/` 下 12 篇，按你想解决的问题挑：
 
 **想知道某个键怎么写、为什么不生效**
 
 - [[docs/settings_README|settings.json 使用指南]] — 逐键对齐本目录取值、生效时机、静默失效的地方
 - [[docs/mcp_README|.mcp.json 团队共享配置指南]] — 作用域优先级、审批、凭据边界
 
-**想读官方原文（7 篇，中文）**
+**想读官方原文（8 篇，中文）**
 
 - [[docs/ClaudeCode官方文档/Claude Code 如何工作|Claude Code 如何工作]]
 - [[docs/ClaudeCode官方文档/Claude 如何记住您的项目|Claude 如何记住您的项目]]
@@ -87,12 +116,13 @@ aliases:
 - [[docs/ClaudeCode官方文档/创建自定义 subagents|创建自定义 subagents]]
 - [[docs/ClaudeCode官方文档/使用 hooks 自动化操作|使用 hooks 自动化操作]]
 - [[docs/ClaudeCode官方文档/Hooks 参考|Hooks 参考]]
+- [[docs/ClaudeCode官方文档/Claude Code 最佳实践|Claude Code 最佳实践]]
 
 **想看调研与排查**
 
 - [[docs/Claude-Code-token-消耗排查与优化-2026-11|token 消耗排查与优化]] — 上下文成本怎么观测、怎么降
 - [[docs/Claude-Code-harness-社区实践现状-2026-11|harness 社区实践现状]] — 配置生态与版本沿革、`AGENTS.md` 与 `CLAUDE.md` 的差异
 
-## 六、维护约定
+## 七、维护约定
 
 给维护者 Agent 看的规范在 [[AGENTS|AGENTS.md]]：它回答「怎么干活、要守什么」，本文件只回答「这是什么、为什么、怎么用」。改配置前先读它。
